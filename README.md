@@ -20,3 +20,7 @@ NKCSim เป็นโปรแกรมจำลองการทำงาน�
     ```bash
     streamlit run nkc_sim.py
     ```
+3. **หรือใช้:**
+    ```bash
+   ./venv/bin/python -m streamlit run nkc_sim.py 
+    ``` 
