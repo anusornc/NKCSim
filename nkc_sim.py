@@ -6,13 +6,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # ===============================
-# ฟังก์ชันการจำลอง
+# ฟังก์ชันการจำลอง (ปรับให้มีแนวโน้มแบบลอการิทึม)
 # ===============================
 def run_simulation(N, strategy_k, C, rho, threshold, seed, time_steps, pre_chasm_steps):
     np.random.seed(seed)
     
     variables = np.random.normal(loc=5, scale=2, size=N)
-    variables = np.clip(variables, 1, 9)
+    variables = np.clip(variables, 1, 12)  # ขยายช่วงค่าเฉลี่ย
     
     selected_vars = np.random.choice(N, strategy_k, replace=False)
     initial_mean = np.mean(variables[selected_vars])
@@ -24,11 +24,14 @@ def run_simulation(N, strategy_k, C, rho, threshold, seed, time_steps, pre_chasm
     for step in range(time_steps):
         if step > 0:
             noise = np.random.normal(0, scale=C, size=strategy_k)
-            variables[selected_vars] = variables[selected_vars] * rho + \
-                                       (1 - rho) * initial_mean + \
-                                       noise * (1 - rho)
-            variables = np.clip(variables, 1, 9)
-        
+            # ปรับ trend_factor เป็นฟังก์ชันลอการิทึม
+            trend_factor = 0.5 * np.log1p(step)
+            variables[selected_vars] = (variables[selected_vars] * rho + 
+                                       (1 - rho) * initial_mean + 
+                                       noise * (1 - rho) + 
+                                       trend_factor)
+            variables = np.clip(variables, 1, 12)  # ขยายช่วงค่าเฉลี่ย
+    
         avg = np.mean(variables[selected_vars])
         averages.append(avg)
         
@@ -54,7 +57,7 @@ def run_simulation(N, strategy_k, C, rho, threshold, seed, time_steps, pre_chasm
 # ===============================
 # UI ด้วย Streamlit
 # ===============================
-st.title("🚀 NKC Model Simulation (ฉบับปรับแกน Time Step)")
+st.title("🚀 NKC Model Simulation (ปรับปรุงแนวโน้มลอการิทึม)")
 
 st.markdown("""
 ### 📝 ภาพรวม
@@ -78,11 +81,12 @@ strategies = st.sidebar.multiselect(
     help="Effectuation: ใช้ข้อมูลน้อย | Causation: ใช้ข้อมูลมาก"
 )
 
+# ปรับ C_values ให้ลด noise
 C_values = st.sidebar.multiselect(
     "ระดับความซับซ้อน (C)",
-    [1, 7, 9],
-    default=[1, 9],
-    help="1=ต่ำ (เสถียร), 7=ปานกลาง, 9=สูง (ผันผวน)"
+    [1, 2, 3],
+    default=[1, 3],
+    help="1=ต่ำ (เสถียร), 2=ปานกลาง, 3=สูง (ผันผวน)"
 )
 
 rho_values = st.sidebar.multiselect(
@@ -108,16 +112,19 @@ seeds_input = st.sidebar.text_input(
 # ตัวเลือกขั้นสูง
 with st.sidebar.expander("ตัวเลือกขั้นสูง"):
     time_steps = st.number_input("จำนวนขั้นตอนการจำลอง", min_value=50, value=100, help="จำนวนรอบการจำลอง")
-    pre_chasm_steps = st.number_input("ขั้นตอนก่อน Chasm", min_value=5, max_value=time_steps-1, value=16, help="จุดแบ่งก่อน/หลัง Chasm")
-    max_simulations = st.number_input("จำนวนการจำลองสูงสุด", min_value=1, value=50, help="จำกัดการรันเพื่อประสิทธิภาพ")
+    pre_chasm_steps = st.sidebar.number_input("ขั้นตอนก่อน Chasm", min_value=5, max_value=time_steps-1, value=16, help="จุดแบ่งก่อน/หลัง Chasm")
+    max_simulations = st.sidebar.number_input("จำนวนการจำลองสูงสุด", min_value=1, value=50, help="จำกัดการรันเพื่อประสิทธิภาพ")
 
 # ตัวเลือกกราฟ
 st.sidebar.subheader("ตั้งค่ากราฟ")
-graph_type = st.sidebar.selectbox("เลือกประเภทกราฟ", ["2D แยกตามเกณฑ์", "3D รวม Time Steps"], index=0)
+graph_type = st.sidebar.selectbox("เลือกประเภทกราฟ", ["2D แยกตามเกณฑ์", "3D รวม Time Steps", "2D Time Series"], index=0)
 if graph_type == "2D แยกตามเกณฑ์":
     y_axis = st.sidebar.selectbox("เลือกข้อมูลในแกน Y", 
                                   ["อัตราการยอมรับก่อน Chasm (%)", "อัตราการยอมรับหลัง Chasm (%)"], index=1)
     x_axis = st.sidebar.selectbox("เลือกข้อมูลในแกน X", ["rho", "C"], index=0)
+elif graph_type == "3D รวม Time Steps" or graph_type == "2D Time Series":
+    color_by = st.sidebar.selectbox("เลือกสีตาม", ["C", "กลยุทธ์"], index=0, help="เลือกว่าสีจะแสดง C หรือ กลยุทธ์")
+    time_step_range = st.sidebar.slider("เลือกช่วง Time Step", 0, 100, (16, 100), help="กรองข้อมูลตามช่วง Time Step")
 
 # ปุ่มเริ่มการจำลอง
 st.sidebar.markdown("---")
@@ -176,8 +183,8 @@ if st.sidebar.button("เริ่มการจำลอง"):
                       'ก่อน Chasm Mean', 'ก่อน Chasm Std', 
                       'หลัง Chasm Mean', 'หลัง Chasm Std']
 
-    # บันทึกประวัติ
-    if 'history' not in st.session_state:
+    # แก้ไขการกำหนด Session State
+    if 'history' not in st.session_state or st.session_state.history is None:
         st.session_state.history = []
     st.session_state.history.append(df)
     st.write(f"บันทึกการจำลองครั้งที่: {len(st.session_state.history)}")
@@ -203,18 +210,19 @@ if st.sidebar.button("เริ่มการจำลอง"):
             )
             st.plotly_chart(fig, use_container_width=True)
     
-    else:  # 3D รวม Time Steps (ปรับให้ Time Step เป็นแกน Y)
+    elif graph_type == "3D รวม Time Steps":
         time_data = []
         for result in results:
             for t, avg in enumerate(result['averages']):
-                time_data.append({
-                    'กลยุทธ์': result['กลยุทธ์'],
-                    'C': result['C'],
-                    'rho': result['rho'],
-                    'เกณฑ์การยอมรับ': result['เกณฑ์การยอมรับ'],
-                    'Time Step': t,
-                    'ค่าเฉลี่ย': avg
-                })
+                if time_step_range[0] <= t <= time_step_range[1]:
+                    time_data.append({
+                        'กลยุทธ์': result['กลยุทธ์'],
+                        'C': result['C'],
+                        'rho': result['rho'],
+                        'เกณฑ์การยอมรับ': result['เกณฑ์การยอมรับ'],
+                        'Time Step': t,
+                        'ค่าเฉลี่ย': avg
+                    })
         time_df = pd.DataFrame(time_data)
         
         if time_df.empty:
@@ -223,29 +231,62 @@ if st.sidebar.button("เริ่มการจำลอง"):
             
         sample_df = time_df.sample(min(1000, len(time_df)))
         
-        # ปรับให้ Time Step เป็นแกน Y และ C เป็นสี
+        color_col = 'C' if color_by == "C" else 'กลยุทธ์'
         fig = go.Figure(data=[go.Scatter3d(
             x=sample_df['rho'],
-            y=sample_df['Time Step'],  # เปลี่ยนจาก C เป็น Time Step
+            y=sample_df['Time Step'],
             z=sample_df['ค่าเฉลี่ย'],
             mode='markers',
             marker=dict(
                 size=5,
-                color=sample_df['C'],  # เปลี่ยนสีให้แสดง C
-                colorscale='Viridis',
+                color=sample_df[color_col],
+                colorscale='Viridis' if color_by == "C" else 'Blues',
                 showscale=True,
-                colorbar_title="ระดับความซับซ้อน (C)"
+                colorbar_title=color_by
             ),
             text=sample_df['กลยุทธ์']
         )])
         fig.update_layout(
-            title="กราฟ 3D: rho vs Time Step vs ค่าเฉลี่ย (สีตาม C)",
+            title=f"กราฟ 3D: rho vs Time Step vs ค่าเฉลี่ย (สีตาม {color_by})",
             scene=dict(
                 xaxis_title="rho",
-                yaxis_title="Time Step",  # ปรับชื่อแกน
+                yaxis_title="Time Step",
                 zaxis_title="ค่าเฉลี่ย"
             )
         )
+        st.plotly_chart(fig, use_container_width=True)
+    
+    else:  # 2D Time Series
+        time_data = []
+        for result in results:
+            for t, avg in enumerate(result['averages']):
+                if time_step_range[0] <= t <= time_step_range[1]:
+                    time_data.append({
+                        'กลยุทธ์': result['กลยุทธ์'],
+                        'C': result['C'],
+                        'rho': result['rho'],
+                        'เกณฑ์การยอมรับ': result['เกณฑ์การยอมรับ'],
+                        'Time Step': t,
+                        'ค่าเฉลี่ย': avg
+                    })
+        time_df = pd.DataFrame(time_data)
+        
+        if time_df.empty:
+            st.error("ไม่มีข้อมูลสำหรับกราฟ Time Series")
+            st.stop()
+            
+        color_col = 'C' if color_by == "C" else 'กลยุทธ์'
+        fig = px.line(
+            time_df,
+            x="Time Step",
+            y="ค่าเฉลี่ย",
+            color=color_col,
+            facet_col="กลยุทธ์" if color_by == "C" else None,
+            facet_row="C" if color_by == "C" else None,
+            title=f"กราฟ Time Series: Time Step vs ค่าเฉลี่ย (สีตาม {color_by})"
+        )
+        # ตั้งค่าความโปร่งใส
+        fig.update_traces(opacity=0.5)
         st.plotly_chart(fig, use_container_width=True)
 
     st.download_button(
