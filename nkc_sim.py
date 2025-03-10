@@ -778,18 +778,14 @@ def main():
                             height=600
                         )
                         
-                        # เพิ่มเส้นเกณฑ์การยอมรับ
-                        for i in range(len(fig.data)):
-                            fig.add_shape(
-                                type='line',
-                                x0=graph_params['time_step_range'][0],
-                                y0=thresh,
-                                x1=graph_params['time_step_range'][1],
-                                y1=thresh,
-                                line=dict(color='red', width=2, dash='dash'),
-                                row=fig.data[i].xaxis.replace('x', '').split('y')[0] or 1, 
-                                col=fig.data[i].yaxis.replace('y', '') or 1
-                            )
+                        # เพิ่มเส้นเกณฑ์การยอมรับ โดยใช้วิธีที่เรียบง่ายกว่า
+                        # แทนที่จะพยายามเพิ่มเส้นในแต่ละ facet ให้ใช้ add_hline ซึ่งจะเพิ่มเส้นทั้งหมดโดยอัตโนมัติ
+                        fig.add_hline(
+                            y=thresh,
+                            line=dict(color='red', width=2, dash='dash'),
+                            annotation_text=f"เกณฑ์: {thresh}",
+                            annotation_position="top right"
+                        )
                         
                         # ปรับความโปร่งใส
                         fig.update_traces(opacity=0.5)
@@ -844,13 +840,20 @@ def main():
         
         # เลือกจำนวนประวัติที่จะแสดง
         max_to_show = min(len(st.session_state.history), st.session_state.max_history_shown)
-        entries_to_show = st.slider(
-            "จำนวนประวัติที่แสดง", 
-            min_value=1, 
-            max_value=min(len(st.session_state.history), MAX_HISTORY_ITEMS), 
-            value=max_to_show
-        )
-        st.session_state.max_history_shown = entries_to_show
+        
+        # ใช้ slider เฉพาะเมื่อมีประวัติมากกว่า 1 รายการ
+        if len(st.session_state.history) > 1:
+            entries_to_show = st.slider(
+                "จำนวนประวัติที่แสดง", 
+                min_value=1, 
+                max_value=min(len(st.session_state.history), MAX_HISTORY_ITEMS), 
+                value=max_to_show
+            )
+            st.session_state.max_history_shown = entries_to_show
+        else:
+            # ถ้ามีแค่ 1 รายการ ไม่ต้องใช้ slider
+            entries_to_show = 1
+            st.session_state.max_history_shown = 1
         
         # แสดงประวัติย้อนหลัง
         for i in range(1, entries_to_show + 1):
