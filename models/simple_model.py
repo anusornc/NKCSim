@@ -197,10 +197,10 @@ class SimpleNKCModel(NKCModel):
             },
             "C_values": {
                 "type": "multiselect",
-                "label": "ระดับความซับซ้อน (C)",
+                "label": "ระดับความซับซ้อน (Co)",
                 "options": [0.5, 1.0, 1.5, 2.0, 3.0],
                 "default": [1.0, 3.0],
-                "help": "C ต่ำ = เสถียร, C สูง = ผันผวน (หน่วย: ค่าเบี่ยงเบนมาตรฐาน)"
+                "help": "Co ต่ำ = เสถียร, Co สูง = ผันผวน (หน่วย: ค่าเบี่ยงเบนมาตรฐาน)"
             },
             "rho_values": {
                 "type": "multiselect",
