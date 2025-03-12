@@ -79,7 +79,7 @@ def parse_seeds(seed_input: str) -> List[int]:
     except Exception as e:
         raise ValueError(f"กรุณากรอก Random Seeds เป็นตัวเลขคั่นด้วยเครื่องหมายจุลภาค (เช่น 42, 123): {str(e)}")
 
-def plot_simple_model_results(df: pd.DataFrame, summary: pd.DataFrame, graph_params: Dict[str, Any]) -> None:
+def plot_simple_model_results(df: pd.DataFrame, summary: pd.DataFrame, graph_params: Dict[str, Any], K_EFFECTUATION: int, K_CAUSATION: int) -> None:
     """
     สร้างกราฟสำหรับผลลัพธ์ของแบบจำลองแบบง่าย
     
@@ -87,6 +87,8 @@ def plot_simple_model_results(df: pd.DataFrame, summary: pd.DataFrame, graph_par
         df: DataFrame ที่มีผลลัพธ์การจำลอง
         summary: DataFrame ที่มีสรุปผลลัพธ์
         graph_params: พารามิเตอร์สำหรับกราฟ
+        K_EFFECTUATION: The K value for Effectuation.
+        K_CAUSATION: The K value for Causation.
     """
     if 'graph_type' not in graph_params:
         st.error("ไม่พบประเภทกราฟในพารามิเตอร์")
@@ -95,7 +97,7 @@ def plot_simple_model_results(df: pd.DataFrame, summary: pd.DataFrame, graph_par
     graph_type = graph_params['graph_type']
     
     if graph_type == "2D แยกตามเกณฑ์" or graph_type == "แสดงทั้งหมด":
-        plot_2d_by_threshold(df, graph_params)
+        plot_2d_by_threshold(df, graph_params, K_EFFECTUATION, K_CAUSATION)
     
     if graph_type == "3D รวม Time Steps" or graph_type == "แสดงทั้งหมด":
         plot_3d(df, graph_params)
@@ -103,13 +105,15 @@ def plot_simple_model_results(df: pd.DataFrame, summary: pd.DataFrame, graph_par
     if graph_type == "2D Time Series" or graph_type == "แสดงทั้งหมด":
         plot_time_series(df, graph_params)
 
-def plot_2d_by_threshold(df: pd.DataFrame, graph_params: Dict[str, Any]) -> None:
+def plot_2d_by_threshold(df: pd.DataFrame, graph_params: Dict[str, Any], K_EFFECTUATION: int, K_CAUSATION: int) -> None:
     """
     สร้างกราฟ 2D แยกตามเกณฑ์
     
     Args:
         df: DataFrame ที่มีผลลัพธ์การจำลอง
         graph_params: พารามิเตอร์สำหรับกราฟ
+        K_EFFECTUATION: The K value for Effectuation.
+        K_CAUSATION: The K value for Causation.
     """
     thresholds = df['เกณฑ์การยอมรับ'].unique()
     
@@ -126,7 +130,7 @@ def plot_2d_by_threshold(df: pd.DataFrame, graph_params: Dict[str, Any]) -> None
                 y=graph_params['y_axis'],
                 color="กลยุทธ์",
                 facet_col="C" if graph_params['x_axis'] == 'rho' else 'rho',
-                title=f"{graph_params['y_axis']} (เกณฑ์ = {thresh})",
+                title=f"{graph_params['y_axis']} (เกณฑ์ = {thresh}, K_EFFECTUATION={K_EFFECTUATION}, K_CAUSATION={K_CAUSATION})",
                 hover_data=['N', 'K', 'seed'],
                 labels={
                     'rho': 'สัมประสิทธิ์การเปลี่ยนแปลง (rho)',

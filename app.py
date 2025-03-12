@@ -575,29 +575,29 @@ def main():
                     params_df = pd.DataFrame({
                         'พารามิเตอร์': [
                             'จำนวนบิตในสตริง (N)',
-                            'ระดับการเชื่อมโยงระหว่างเอเจนต์ (C)',
-                            'จำนวนขั้นตอนการค้นหา',
-                            'จำนวนรอบการจำลอง',
-                            'K สำหรับ Effectuation',
-                            'K สำหรับ Causation',
-                            'น้ำหนักสำหรับบิตของตนเอง',
-                            'น้ำหนักสำหรับบิตจากเอเจนต์อื่น',
-                            'ค่าคงที่ใน Fitness',
-                            'ขอบเขตของค่าสุ่ม',
-                            'ความเอนเอียงเริ่มต้น (% บิตเป็น 1)'
+                            'ระดับการเชื่อมโยงระหว่างเอเจนต์ (C)' if st.session_state.model_type == "agent" else '',
+                            'จำนวนขั้นตอนการค้นหา' if st.session_state.model_type == "agent" else '',
+                            'จำนวนรอบการจำลอง' if st.session_state.model_type == "agent" else '',
+                            'K สำหรับ Effectuation' if st.session_state.model_type == "agent" else '',
+                            'K สำหรับ Causation' if st.session_state.model_type == "agent" else '',
+                            'น้ำหนักสำหรับบิตของตนเอง' if st.session_state.model_type == "agent" else '',
+                            'น้ำหนักสำหรับบิตจากเอเจนต์อื่น' if st.session_state.model_type == "agent" else '',
+                            'ค่าคงที่ใน Fitness' if st.session_state.model_type == "agent" else '',
+                            'ขอบเขตของค่าสุ่ม' if st.session_state.model_type == "agent" else '',
+                            'ความเอนเอียงเริ่มต้น (% บิตเป็น 1)' if st.session_state.model_type == "agent" else ''
                         ],
                         'ค่า': [
                             str(N),
-                            ', '.join(map(str, c_values)),  # แปลงลิสต์เป็น string ก่อน
-                            str(steps),
-                            str(runs),
-                            str(fitness_params['k_effectuation']),
-                            str(fitness_params['k_causation']),
-                            str(fitness_params['own_weight']),
-                            str(fitness_params['cross_weight']),
-                            str(fitness_params['base_fitness']),
-                            str(fitness_params['random_range']),
-                            str(fitness_params['p_ones'])
+                            ', '.join(map(str, c_values)) if st.session_state.model_type == "agent" else '',
+                            str(steps) if st.session_state.model_type == "agent" else '',
+                            str(runs) if st.session_state.model_type == "agent" else '',
+                            str(fitness_params['k_effectuation']) if st.session_state.model_type == "agent" else '',
+                            str(fitness_params['k_causation']) if st.session_state.model_type == "agent" else '',
+                            str(fitness_params['own_weight']) if st.session_state.model_type == "agent" else '',
+                            str(fitness_params['cross_weight']) if st.session_state.model_type == "agent" else '',
+                            str(fitness_params['base_fitness']) if st.session_state.model_type == "agent" else '',
+                            str(fitness_params['random_range']) if st.session_state.model_type == "agent" else '',
+                            str(fitness_params['p_ones']) if st.session_state.model_type == "agent" else ''
                         ]
                     })
                     st.dataframe(params_df, use_container_width=True)
@@ -608,7 +608,11 @@ def main():
                 
                 # แสดงกราฟ
                 st.header("📈 กราฟแสดงผล")
-                plot_simple_model_results(df.to_dict('records'), summary, graph_params)
+                if isinstance(df, pd.DataFrame):
+                    # Pass the correct K values to the plotting function
+                    plot_simple_model_results(df, summary, graph_params, K_EFFECTUATION, K_CAUSATION)
+                else:
+                    st.error("เกิดข้อผิดพลาด: ข้อมูลไม่ถูกต้อง")
                 
                 # ดาวน์โหลดข้อมูล
                 st.header("💾 ดาวน์โหลดข้อมูล")
@@ -710,7 +714,7 @@ def main():
                         ],
                         'ค่า': [
                             N,
-                            ', '.join([str(c) for c in c_values]),
+                            ', '.join([str(c) for c in c_values]) if c_values else None,
                             steps,
                             runs,
                             fitness_params['k_effectuation'],
