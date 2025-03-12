@@ -533,6 +533,8 @@ def plot_agent_model_results(results: Dict[str, Any], unique_id: Optional[str] =
     
     c_values = results.get('c_values', [])
     steps = results.get('steps', 50)
+    k_effectuation = results.get('k_effectuation', 2)
+    k_causation = results.get('k_causation', 5)
     
     # สร้างกราฟค่าเฉลี่ยของประสิทธิภาพ (Performance Mean)
     st.subheader("กราฟค่าเฉลี่ยของประสิทธิภาพ")
@@ -543,13 +545,13 @@ def plot_agent_model_results(results: Dict[str, Any], unique_id: Optional[str] =
             fig_mean.add_trace(go.Scatter(
                 x=list(range(1, steps + 1)),
                 y=scenario_data[c]["ef_mean"],
-                name=f"Effectuation, K=2, C={c}",
+                name=f"Effectuation, K={k_effectuation}, C={c}",
                 line=dict(width=2)
             ))
             fig_mean.add_trace(go.Scatter(
                 x=list(range(1, steps + 1)),
                 y=scenario_data[c]["ca_mean"],
-                name=f"Causation, K=5, C={c}",
+                name=f"Causation, K={k_causation}, C={c}",
                 line=dict(dash='dash', width=2)
             ))
     
@@ -573,13 +575,13 @@ def plot_agent_model_results(results: Dict[str, Any], unique_id: Optional[str] =
             fig_var.add_trace(go.Scatter(
                 x=list(range(1, steps + 1)),
                 y=scenario_data[c]["ef_var"],
-                name=f"Effectuation, K=2, C={c}",
+                name=f"Effectuation, K={k_effectuation}, C={c}",
                 line=dict(width=2)
             ))
             fig_var.add_trace(go.Scatter(
                 x=list(range(1, steps + 1)),
                 y=scenario_data[c]["ca_var"],
-                name=f"Causation, K=5, C={c}",
+                name=f"Causation, K={k_causation}, C={c}",
                 line=dict(dash='dash', width=2)
             ))
     
@@ -606,12 +608,12 @@ def plot_agent_model_results(results: Dict[str, Any], unique_id: Optional[str] =
                 # ใช้ค่าสุดท้ายของ mean
                 bar_data.append({
                     'C': c,
-                    'กลยุทธ์': 'Effectuation (K=2)',
+                    'กลยุทธ์': f'Effectuation (K={k_effectuation})',
                     'ค่าเฉลี่ยสุดท้าย': scenario_data[c]["ef_mean"][-1]
                 })
                 bar_data.append({
                     'C': c,
-                    'กลยุทธ์': 'Causation (K=5)',
+                    'กลยุทธ์': f'Causation (K={k_causation})',
                     'ค่าเฉลี่ยสุดท้าย': scenario_data[c]["ca_mean"][-1]
                 })
         

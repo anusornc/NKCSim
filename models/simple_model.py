@@ -80,6 +80,9 @@ class SimpleNKCModel(NKCModel):
             threshold_crossed = False
             threshold_crossed_step = -1
             
+            # Initialize c_values
+            c_values = []
+            
             # วนลูปตามจำนวน time steps
             for step in range(time_steps):
                 if step > 0:
